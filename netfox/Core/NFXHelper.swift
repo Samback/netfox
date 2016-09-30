@@ -98,12 +98,12 @@ extension NFXColor
 extension NFXFont
 {
     #if os(iOS)
-    class func NFXFont(_ size: CGFloat) -> UIFont
+    class func NFXFont(size: CGFloat) -> UIFont
     {
     return UIFont(name: "HelveticaNeue", size: size)!
     }
     
-    class func NFXFontBold(_ size: CGFloat) -> UIFont
+    class func NFXFontBold(size: CGFloat) -> UIFont
     {
     return UIFont(name: "HelveticaNeue-Bold", size: size)!
     }
