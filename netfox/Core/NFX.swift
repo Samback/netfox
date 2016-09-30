@@ -7,9 +7,9 @@
 
 import Foundation
 #if os(OSX)
-import Cocoa
+    import Cocoa
 #else
-import UIKit
+    import UIKit
 #endif
 
 let nfxVersion = "1.8"
@@ -22,9 +22,9 @@ let nfxWillCloseNotification = "NFXWillCloseNotification"
 open class NFX: NSObject
 {
     #if os(OSX)
-        var windowController: NFXWindowController?
-        let mainMenu: NSMenu? = NSApp.mainMenu?.itemArray[1].submenu
-        var nfxMenuItem: NSMenuItem = NSMenuItem(title: "netfox", action: "show", keyEquivalent: String(character: NSF9FunctionKey, length: 1))
+    var windowController: NFXWindowController?
+    let mainMenu: NSMenu? = NSApp.mainMenu?.items[1].submenu
+    var nfxMenuItem: NSMenuItem = NSMenuItem(title: "netfox", action: #selector(NFX.show), keyEquivalent: String(utf16CodeUnits: [unichar(NSF9FunctionKey)], count: 1))
     #endif
     
     // swiftSharedInstance is not accessible from ObjC
@@ -56,7 +56,7 @@ open class NFX: NSObject
     fileprivate var ignoredURLs = [String]()
     fileprivate var filters = [Bool]()
     fileprivate var lastVisitDate: Date = Date()
-
+    
     @objc open func start()
     {
         self.started = true
@@ -64,9 +64,9 @@ open class NFX: NSObject
         enable()
         clearOldData()
         showMessage("Started!")
-    #if os(OSX)
-        self.addNetfoxToMainMenu()
-    #endif
+        #if os(OSX)
+            self.addNetfoxToMainMenu()
+        #endif
     }
     
     @objc open func stop()
@@ -76,9 +76,9 @@ open class NFX: NSObject
         clearOldData()
         self.started = false
         showMessage("Stopped!")
-    #if os(OSX)
-        self.removeNetfoxFromMainmenu()
-    #endif
+        #if os(OSX)
+            self.removeNetfoxFromMainmenu()
+        #endif
     }
     
     fileprivate func showMessage(_ msg: String) {
@@ -124,13 +124,13 @@ open class NFX: NSObject
     @objc open func setGesture(_ gesture: ENFXGesture)
     {
         self.selectedGesture = gesture
-    #if os(OSX)
-        if gesture == .shake {
-            self.addNetfoxToMainMenu()
-        } else {
-            self.removeNetfoxFromMainmenu()
-        }
-    #endif
+        #if os(OSX)
+            if gesture == .shake {
+                self.addNetfoxToMainMenu()
+            } else {
+                self.removeNetfoxFromMainmenu()
+            }
+        #endif
     }
     
     @objc open func show()
@@ -169,7 +169,7 @@ open class NFX: NSObject
         
         self.showNFXFollowingPlatform()
         self.presented = true
-
+        
     }
     
     fileprivate func hideNFX()
@@ -226,85 +226,86 @@ open class NFX: NSObject
 }
 
 #if os(iOS)
-
-extension NFX {
     
-    fileprivate func showNFXFollowingPlatform()
-    {
-        var navigationController: UINavigationController?
+    extension NFX {
         
-        var listController: NFXListController_iOS
-        listController = NFXListController_iOS()
+        fileprivate func showNFXFollowingPlatform()
+        {
+            var navigationController: UINavigationController?
+            
+            var listController: NFXListController_iOS
+            listController = NFXListController_iOS()
+            
+            navigationController = UINavigationController(rootViewController: listController)
+            navigationController!.navigationBar.isTranslucent = false
+            navigationController!.navigationBar.tintColor = UIColor.NFXOrangeColor()
+            navigationController!.navigationBar.barTintColor = UIColor.NFXStarkWhiteColor()
+            navigationController!.navigationBar.titleTextAttributes = [NSForegroundColorAttributeName : UIColor.NFXOrangeColor()]
+            
+            presentingViewController?.present(navigationController!, animated: true, completion: nil)
+        }
         
-        navigationController = UINavigationController(rootViewController: listController)
-        navigationController!.navigationBar.isTranslucent = false
-        navigationController!.navigationBar.tintColor = UIColor.NFXOrangeColor()
-        navigationController!.navigationBar.barTintColor = UIColor.NFXStarkWhiteColor()
-        navigationController!.navigationBar.titleTextAttributes = [NSForegroundColorAttributeName : UIColor.NFXOrangeColor()]
+        fileprivate func hideNFXFollowingPlatform(_ completion: (() -> Void)?)
+        {
+            presentingViewController?.dismiss(animated: true, completion: { () -> Void in
+                if let notNilCompletion = completion {
+                    notNilCompletion()
+                }
+            })
+        }
         
-        presentingViewController?.present(navigationController!, animated: true, completion: nil)
-    }
-    
-    fileprivate func hideNFXFollowingPlatform(_ completion: (() -> Void)?)
-    {
-        presentingViewController?.dismiss(animated: true, completion: { () -> Void in
-            if let notNilCompletion = completion {
-                notNilCompletion()
-            }
-        })
-    }
-    
-    fileprivate var presentingViewController: UIViewController?
+        fileprivate var presentingViewController: UIViewController?
         {
             let rootViewController = UIApplication.shared.keyWindow?.rootViewController
             return rootViewController?.presentedViewController ?? rootViewController
+        }
+        
     }
     
-}
-
 #elseif os(OSX)
     
-extension NFX {
-    
-    public func windowDidClose() {
-        self.presented = false
-    }
-    
-    private func setupNetfoxMenuItem() {
-        self.nfxMenuItem.target = self
-        self.nfxMenuItem.action = "motionDetected"
-        self.nfxMenuItem.keyEquivalent = "n"
-        self.nfxMenuItem.keyEquivalentModifierMask = Int(NSEventModifierFlags.CommandKeyMask.rawValue | NSEventModifierFlags.ShiftKeyMask.rawValue)
-    }
-    
-    private func addNetfoxToMainMenu() {
-        self.setupNetfoxMenuItem()
-        if let menu = self.mainMenu {
-            menu.insertItem(self.nfxMenuItem, atIndex: 0)
+    extension NFX {
+        
+        public func windowDidClose() {
+            self.presented = false
         }
-    }
-    
-    private func removeNetfoxFromMainmenu() {
-        if let menu = self.mainMenu {
-            menu.removeItem(self.nfxMenuItem)
+        
+        private func setupNetfoxMenuItem() {
+            self.nfxMenuItem.target = self
+            self.nfxMenuItem.action = #selector(NFX.motionDetected)
+            self.nfxMenuItem.keyEquivalent = "n"
+            
+            self.nfxMenuItem.keyEquivalentModifierMask =  NSEventModifierFlags(rawValue: (NSEventModifierFlags.command.rawValue | NSEventModifierFlags.shift.rawValue))
         }
-    }
-    
-    private func showNFXFollowingPlatform()  {
-        if self.windowController == nil {
-            self.windowController = NFXWindowController(windowNibName: "NetfoxWindow")
+        
+        fileprivate func addNetfoxToMainMenu() {
+            self.setupNetfoxMenuItem()
+            if let menu = self.mainMenu {
+                menu.insertItem(self.nfxMenuItem, at: 0)
+            }
         }
-        self.windowController?.showWindow(nil)
-    }
-    
-    private func hideNFXFollowingPlatform(completion: (() -> Void)?)
-    {
-        self.windowController?.close()
-        if let notNilCompletion = completion {
-            notNilCompletion()
+        
+        fileprivate func removeNetfoxFromMainmenu() {
+            if let menu = self.mainMenu {
+                menu.removeItem(self.nfxMenuItem)
+            }
         }
+        
+        fileprivate func showNFXFollowingPlatform()  {
+            if self.windowController == nil {
+                self.windowController = NFXWindowController(windowNibName: "NetfoxWindow")
+            }
+            self.windowController?.showWindow(nil)
+        }
+        
+        fileprivate func hideNFXFollowingPlatform(completion: (() -> Void)?)
+        {
+            self.windowController?.close()
+            if let notNilCompletion = completion {
+                notNilCompletion()
+            }
+        }
+        
     }
-    
-}
     
 #endif

@@ -20,12 +20,11 @@ class NFXInfoController_OSX: NFXInfoController {
     func generateInfo()
     {
         NFXDebugInfo.getNFXIP { (result) -> Void in
-            dispatch_async(dispatch_get_main_queue()) { () -> Void in
-                self.textView.textStorage?.setAttributedString(self.generateInfoString(result))
+            DispatchQueue.main.async {
+               self.textView.textStorage?.setAttributedString(self.generateInfoString(result))
             }
         }
     }
-
 }
 
 #endif
